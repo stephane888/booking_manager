@@ -1,0 +1,15 @@
+booking_manager.manager:
+  path: '/booking-manager/manager/{entity_type_id}/{id}'
+  defaults:
+    _title: 'Example'
+    _controller: '\Drupal\booking_manager\Controller\BookingManagerController::manager'
+  requirements:
+    _permission: 'access content'
+
+booking_manager.settings_form:
+  path: '/admin/config/system/booking-manager'
+  defaults:
+    _title: 'Booking Manager settings'
+    _form: 'Drupal\booking_manager\Form\SettingsForm'
+  requirements:
+    _permission: 'administer booking_manager configuration'

@@ -1,0 +1,10 @@
+entity.manage_days_entity.add_form:
+  route_name: entity.manage_days_entity.add_page
+  title: 'Add Manage days entity'
+  appears_on:
+    - entity.manage_days_entity.collection
+entity.manage_days_entity_type.add_form:
+  route_name: entity.manage_days_entity_type.add_form
+  title: 'Add Manage days entity type'
+  appears_on:
+    - entity.manage_days_entity_type.collection

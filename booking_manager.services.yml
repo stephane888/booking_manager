@@ -1,0 +1,9 @@
+services:
+  booking_manager.event_subscriber:
+    class: Drupal\booking_manager\EventSubscriber\BookingManagerSubscriber
+    arguments: ['@messenger']
+    tags:
+      - { name: event_subscriber }
+  plugin.manager.booking_manager.manage_days:
+    class: Drupal\booking_manager\ManageDaysPluginManger
+    parent: default_plugin_manager

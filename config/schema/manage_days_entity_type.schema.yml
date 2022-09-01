@@ -1,0 +1,26 @@
+booking_manager.manage_days_entity_type.*:
+  type: config_entity
+  label: 'Manage days entity type config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string
+      
+node.type.*.third_party.booking_manager:
+  type: mapping
+  label: 'Prise de RDV'
+  mapping:
+    booking_manager_enabled:
+      type: boolean
+      label: 'Whether to enable the reusable forms on this node type'
+    booking_manager_plugin:
+      type: sequence
+      label: 'Available forms'
+      sequence:
+        type: string
+        label: 'Plugin name' 

@@ -1,0 +1,23 @@
+booking_manager.settings_form:
+  title: Booking Manager
+  description: Configure Booking Manager.
+  parent: system.admin_config_system
+  route_name: booking_manager.settings_form
+  weight: 10
+
+# Manage days entity menu items definition
+entity.manage_days_entity.collection:
+  title: 'Manage days entity list'
+  route_name: entity.manage_days_entity.collection
+  description: 'List Manage days entity entities'
+  parent: system.admin_structure
+  weight: 100
+
+
+# Manage days entity type menu items definition
+entity.manage_days_entity_type.collection:
+  title: 'Manage days entity type'
+  route_name: entity.manage_days_entity_type.collection
+  description: 'List Manage days entity type (bundles)'
+  parent: system.admin_structure
+  weight: 99

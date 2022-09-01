@@ -1,0 +1,6 @@
+name: Booking Manager
+type: module
+description: permet d&#039;effectuer des reservation
+package: Custom
+core: 8.x
+core_version_requirement: ^8 || ^9

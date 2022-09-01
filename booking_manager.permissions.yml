@@ -1,0 +1,37 @@
+administer booking_manager configuration:
+  title: 'Administer booking_manager configuration'
+  description: 'Optional description.'
+  restrict access: true
+add manage days entity entities:
+  title: 'Create new Manage days entity entities'
+
+administer manage days entity entities:
+  title: 'Administer Manage days entity entities'
+  description: 'Allow to access the administration form to configure Manage days entity entities.'
+  restrict access: true
+
+delete manage days entity entities:
+  title: 'Delete Manage days entity entities'
+
+edit manage days entity entities:
+  title: 'Edit Manage days entity entities'
+
+view published manage days entity entities:
+  title: 'View published Manage days entity entities'
+
+view unpublished manage days entity entities:
+  title: 'View unpublished Manage days entity entities'
+
+view all manage days entity revisions:
+  title: 'View all Manage days entity revisions'
+
+revert all manage days entity revisions:
+  title: 'Revert all Manage days entity revisions'
+  description: 'Role requires permission <em>view Manage days entity revisions</em> and <em>edit rights</em> for manage days entity entities in question or <em>administer manage days entity entities</em>.'
+
+delete all manage days entity revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>view Manage days entity revisions</em> and <em>delete rights</em> for manage days entity entities in question or <em>administer manage days entity entities</em>.'
+
+permission_callbacks:
+  - \Drupal\booking_manager\ManageDaysEntityPermissions::generatePermissions
