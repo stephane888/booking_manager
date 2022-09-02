@@ -3,6 +3,8 @@ booking_manager.manager:
   defaults:
     _title: 'Example'
     _controller: '\Drupal\booking_manager\Controller\BookingManagerController::manager'
+  options:
+    _admin_route: TRUE
   requirements:
     _permission: 'access content'
 
@@ -13,3 +15,12 @@ booking_manager.settings_form:
     _form: 'Drupal\booking_manager\Form\SettingsForm'
   requirements:
     _permission: 'administer booking_manager configuration'
+    
+    
+booking_manager.get.datas.rdv:
+  path: '/booking-manager/api/{entity_type_id}/{entity_id}'
+  defaults:
+    _title: 'Example'
+    _controller: '\Drupal\booking_manager\Controller\BookingManagerController::datasRdv'
+  requirements:
+    _permission: 'access content'

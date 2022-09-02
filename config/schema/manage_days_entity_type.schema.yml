@@ -10,6 +10,15 @@ booking_manager.manage_days_entity_type.*:
       label: 'Label'
     uuid:
       type: string
+    jours:
+      type: mapping
+      label: 'Liste de jour de la semaine'
+    disabled_dates:
+      type: mapping
+      label: 'Liste de jour de la semaine'
+    disabled_periode:
+      type: mapping
+      label: 'Liste de jour de la semaine'
       
 node.type.*.third_party.booking_manager:
   type: mapping

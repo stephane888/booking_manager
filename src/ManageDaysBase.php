@@ -35,6 +35,7 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+  protected $maxCreneau = 50;
 
   /**
    * Constructs a ReusableFormPluginBase object.
@@ -74,6 +75,53 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
     // $entity);
   }
 
+  public function getDatasRdv(ContentEntityBase $entity) {
+    if (!$entity->isNew()) {
+      $key = $this->getTypeId($entity);
+      $storage = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
+      $entityType = $storage->load($key);
+      $confs = $entityType->toArray();
+      $nberDays = $confs['number_week'] * 7;
+      $dataToday = new \DateTime('Now');
+      $result['jours'] = [];
+      for ($i = 0; $i < $nberDays; $i++) {
+        $result['jours'][] = [
+          'label' => $dataToday->format("D. \n  j M"),
+          'creneau' => $this->buildCreneauOfDay($dataToday, $confs)
+        ];
+        $dataToday->modify('+1 day');
+      }
+
+      $result['entityType'] = $confs;
+      return $result;
+    }
+    throw new \Exception("Le contenu n'est pas definit");
+  }
+
+  protected function buildCreneauOfDay(\DateTime $day, array $entityArray) {
+    $creneaux = [];
+    $day_string = $day->format("Y-m-d H:i:s");
+    $dayConf = $entityArray['jours'][$day->format('w')];
+    $d = new \DateTime($day_string);
+    $f = new \DateTime($day_string);
+    $d->setTime($dayConf['h_d'], $dayConf['m_d']);
+    $f->setTime($dayConf['h_f'], $dayConf['m_f']);
+    $interval = !empty($entityArray['interval']) ? $entityArray['interval'] : 30;
+
+    if ($f > $d) {
+      $i = 0;
+      while ($f > $d && $i < $this->maxCreneau) {
+        $i++;
+        $creneaux[] = [
+          'conf' => $dayConf,
+          'value' => $d->format('H:i')
+        ];
+        $d->modify("+ " . $interval . " minutes");
+      }
+    }
+    return $creneaux;
+  }
+
   /**
    * Permet de configurer une prise de rdv pour un contenu.
    * buildConfigForm(ContentEntityBase $entity)
@@ -83,35 +131,26 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
   public function buildConfigForm(ContentEntityBase $entity) {
     $form = [];
     if (!$entity->isNew()) {
-      $values = [
-        'type' => $this->getTypeManageDays($entity)
-      ];
-      $entity = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_id'])->create($values);
-      $form = $this->EntityFormBuilder->getForm($entity, 'default');
-      $form['#attributes']['class'][] = 'container';
+      $key = $this->getTypeId($entity);
+      $storage = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
+      $entityType = $storage->load($key);
+      if ($entityType) {
+        $entityType->set('label', $this->getTypeLabel($entity));
+        $form = $this->EntityFormBuilder->getForm($entityType, 'edit');
+      }
+      else {
+        $values = [
+          'id' => $key,
+          'label' => $this->getTypeLabel($entity)
+        ];
+        $entity = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id'])->create($values);
+        $form = $this->EntityFormBuilder->getForm($entity, 'add');
+      }
     }
     else {
       \Drupal::messenger()->addMessage(' Le contenu doit exister ');
     }
-    // On nettoie le formulaire pour pouvoir l'injecter dans celui du node.
-    if (!empty($form['actions'])) {
-      unset($form['actions']);
-      unset($form['form_build_id']);
-      unset($form['form_token']);
-      unset($form['form_id']);
-      unset($form['#submit']);
-      // Also remove all other properties that start with a '#'.
-      foreach ($form as $key => &$value) {
-        if (strpos($key, '#') === 0) {
-          unset($form[$key]);
-        }
-        elseif (isset($value['#tree'])) {
-          $value['#tree'] = true;
-          $this->addParentsInArray($value);
-        }
-      }
-      // active tree of field;
-    }
+    $form['#attributes']['class'][] = 'container';
     return $form;
   }
 
@@ -132,12 +171,56 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
     }
   }
 
+  public function saveTypeByArray(array $values) {
+    if (!empty($values['id']) && !empty($values['label'])) {
+      $entG = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
+      /**
+       *
+       * @var \Drupal\booking_manager\Entity\ManageDaysEntityType $type
+       */
+      $type = $entG->load($values['id']);
+      if (!empty($type)) {
+        if (!empty($values['jours']))
+          $type->set('jours', $values['jours']);
+
+        $type->save();
+        return $type->id();
+      }
+      else {
+        $entityType = $entG->create($values);
+        $entityType->save();
+        return $entityType->id();
+      }
+    }
+    else
+      return false;
+  }
+
+  /**
+   *
+   * @param ContentEntityBase $entity
+   * @return mixed
+   */
+  protected function getTypeId(ContentEntityBase $entity) {
+    return preg_replace('/[^a-z0-9\-]/', "_", $entity->getEntityTypeId() . '.' . $entity->bundle() . '.' . $entity->id());
+  }
+
+  /**
+   *
+   * @param ContentEntityBase $entity
+   * @return mixed
+   */
+  protected function getTypeLabel(ContentEntityBase $entity) {
+    return $entity->getTitle() . ' (' . $entity->getEntityTypeId() . '.' . $entity->bundle() . ')';
+  }
+
   /**
    * --
    */
   protected function getTypeManageDays(ContentEntityBase $entity) {
-    $key = $entity->getEntityTypeId() . '.' . $entity->bundle() . '.' . $entity->id();
-    $key_id = preg_replace('/[^a-z0-9\-]/', "_", $key);
+    $key = $entity->getEntityTypeId() . '.' . $entity->bundle();
+    // $key_id = preg_replace('/[^a-z0-9\-]/', "_", $key);
+    $key_id = $key;
     $entG = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
     $val = $entG->load($key_id);
     if (empty($val)) {

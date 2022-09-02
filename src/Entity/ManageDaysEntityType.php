@@ -3,6 +3,7 @@
 namespace Drupal\booking_manager\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
+use Drupal\Core\Entity\EntityStorageInterface;
 
 /**
  * Defines the Manage days entity type entity.
@@ -33,6 +34,12 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
  *   config_export = {
  *     "id",
  *     "label",
+ *     "jours",
+ *     "disabled_dates",
+ *     "disabled_periode",
+ *     "interval",
+ *     "decallage",
+ *     "number_week"
  *   },
  *   links = {
  *     "canonical" = "/admin/structure/manage_days_entity_type/{manage_days_entity_type}",
@@ -58,5 +65,28 @@ class ManageDaysEntityType extends ConfigEntityBundleBase implements ManageDaysE
    * @var string
    */
   protected $label;
+  protected $jours = [];
+  protected $disabled_periode = [];
+  protected $disabled_dates = [];
+  protected $interval = 60;
+  protected $decallage = 0;
+  protected $number_week = 6;
+
+  public function preSave(EntityStorageInterface $storage) {
+    parent::preSave($storage);
+    $jours = $this->get('jours');
+    foreach ($jours as $k => $val) {
+      $d = explode(":", $val['h_d__m_d']);
+      $jours[$k]['h_d'] = $d[0];
+      $jours[$k]['m_d'] = isset($d[1]) ? $d[1] : 0;
+      unset($jours[$k]['h_d__m_d']);
+      //
+      $f = explode(":", $val['h_f__m_f']);
+      $jours[$k]['h_f'] = $f[0];
+      $jours[$k]['m_f'] = isset($f[1]) ? $f[1] : 0;
+      unset($jours[$k]['h_f__m_f']);
+    }
+    $this->set('jours', $jours);
+  }
 
 }

@@ -43,12 +43,13 @@ function booking_manager_theme_suggestions_manage_days_entity(array $variables) 
   $suggestions = [];
   $entity = $variables['elements']['#manage_days_entity'];
   $sanitized_view_mode = strtr($variables['elements']['#view_mode'], '.', '_');
-
+  //
   $suggestions[] = 'manage_days_entity__' . $sanitized_view_mode;
   $suggestions[] = 'manage_days_entity__' . $entity->bundle();
   $suggestions[] = 'manage_days_entity__' . $entity->bundle() . '__' . $sanitized_view_mode;
   $suggestions[] = 'manage_days_entity__' . $entity->id();
   $suggestions[] = 'manage_days_entity__' . $entity->id() . '__' . $sanitized_view_mode;
+  //
   return $suggestions;
 }
 
@@ -71,29 +72,128 @@ function booking_manager_form_node_type_form_alter(&$form, FormStateInterface $f
     '#description' => t('Check this box if you would like a reusable form on this node type.'),
     '#default_value' => $node_type->getThirdPartySetting('booking_manager', 'enabled', 0)
   );
-
+  //
   $form_plugins = \Drupal::service('plugin.manager.booking_manager.manage_days')->getDefinitions();
   $options = [];
   foreach ($form_plugins as $name => $plugin) {
     $options[$name] = $plugin['title'];
   }
 
-  $form['prise_rdv']['booking_manager_plugin'] = array(
+  //
+  $form['prise_rdv']['booking_manager_plugin'] = [
     '#type' => 'radios',
     '#title' => t('Available forms'),
     '#default_value' => $node_type->getThirdPartySetting('booking_manager', 'plugin', 'default_model'),
     '#options' => $options,
     '#description' => t('The available forms you can choose from for this node type.'),
-    '#states' => array(
-      'visible' => array(
-        ':input[name="booking_manager_enabled"]' => array(
+    '#states' => [
+      'visible' => [
+        ':input[name="booking_manager_enabled"]' => [
           'checked' => TRUE
-        )
-      )
-    )
-  );
+        ]
+      ]
+    ]
+  ];
 
+  /**
+   * --
+   */
+  $form['prise_rdv']['manage_dates'] = [
+    '#type' => 'fieldset',
+    '#title' => 'Configuration des dates',
+    '#tree' => TRUE,
+    '#states' => [
+      'visible' => [
+        ':input[name="booking_manager_enabled"]' => [
+          'checked' => TRUE
+        ]
+      ]
+    ]
+  ];
+
+  $id = 'node_' . $node_type->get('type');
+  $type = \Drupal::entityTypeManager()->getStorage('manage_days_entity_type')->load($id);
+  $jours = Drupal\booking_manager\ManageDaysInterface::jours;
+  if (!empty($type)) {
+    $jours = $type->get('jours');
+  }
+  /**
+   * --
+   */
+  foreach ($jours as $i => $val) {
+    //
+    $form['prise_rdv']['manage_dates'][$i] = [
+      "#type" => 'details',
+      '#title' => $val['label'],
+      '#open' => false
+    ];
+    $form['prise_rdv']['manage_dates'][$i]['label'] = [
+      "#type" => 'textfield',
+      '#title' => 'Label',
+      '#default_value' => $val['label']
+    ];
+    //
+    $form['prise_rdv']['manage_dates'][$i]['status'] = [
+      "#type" => 'checkbox',
+      '#title' => 'Status',
+      '#default_value' => $val['status']
+    ];
+    //
+    $form['prise_rdv']['manage_dates'][$i]['h_d__m_d'] = [
+      "#type" => 'textfield',
+      '#title' => 'Heure debut',
+      '#default_value' => $val['h_d'] . ':' . $val['m_d']
+    ];
+    //
+    $form['prise_rdv']['manage_dates'][$i]['h_f__m_f'] = [
+      "#type" => 'textfield',
+      '#title' => 'Heure fin',
+      '#default_value' => $val['h_f'] . ':' . $val['m_f']
+    ];
+  }
+  //
   $form['#entity_builders'][] = 'booking_manager_form_node_type_form_builder';
+  //
+}
+
+/**
+ * Entity form builder for the node type form to map some values to third party
+ * settings
+ */
+function booking_manager_form_node_type_form_builder($entity_type, NodeTypeInterface $type, &$form, FormStateInterface $form_state) {
+  if ($form_state->getValue('booking_manager_enabled') === 1) {
+    $type->setThirdPartySetting('booking_manager', 'enabled', 1);
+    $type->setThirdPartySetting('booking_manager', 'plugin', $form_state->getValue('booking_manager_plugin'));
+    $values['jours'] = $form_state->getValue('manage_dates');
+    foreach ($values['jours'] as $k => $val) {
+      $d = explode(":", $val['h_d__m_d']);
+      $values['jours'][$k]['h_d'] = $d[0];
+      $values['jours'][$k]['m_d'] = isset($d[1]) ? $d[1] : 0;
+      unset($values['jours'][$k]['h_d__m_d']);
+      //
+      $f = explode(":", $val['h_f__m_f']);
+      $values['jours'][$k]['h_f'] = $f[0];
+      $values['jours'][$k]['m_f'] = isset($f[1]) ? $f[1] : 0;
+      unset($values['jours'][$k]['h_f__m_f']);
+    }
+    $values['id'] = 'node_' . $form_state->getValue('type');
+    $values['label'] = 'Node ' . $form_state->getValue('name');
+    /**
+     *
+     * @var \Drupal\booking_manager\ManageDaysPluginManger $plugin_manager
+     */
+    $plugin_manager = \Drupal::service('plugin.manager.booking_manager.manage_days');
+    /**
+     *
+     * @var \Drupal\booking_manager\ManageDaysBase $manage_days
+     */
+    $manage_days = $plugin_manager->createInstance($form_state->getValue('booking_manager_plugin'));
+    $manage_days->saveTypeByArray($values);
+    return;
+  }
+  //
+  $type->unsetThirdPartySetting('booking_manager', 'enabled');
+  $type->unsetThirdPartySetting('booking_manager', 'plugin');
 }
 
 /**
@@ -113,34 +213,19 @@ function booking_manager_form_node_form_alter(&$form, FormStateInterface $form_s
   $nodeType = \Drupal\node\Entity\NodeType::load($entity->getType());
   $ThirdPartySettings = $nodeType->getThirdPartySettings('booking_manager');
   /**
-   * On injecte le formulaire de RDV dans celui du content.
+   * On ajoute un bouton dans le formulaire afin de permettre de rediriger vers
+   * une page d'edition de rdv.
    */
   if (!empty($ThirdPartySettings['enabled']) && !empty($ThirdPartySettings['plugin'])) {
-    $plugin_manager = \Drupal::service('plugin.manager.booking_manager.manage_days');
-    $form['booking_manager'] = [
-      '#type' => 'fieldset',
-      '#title' => 'Configuration de la reservation',
-      '#tree' => TRUE
-      // '#element_validate' => [
-      // '_booking_manager_form_submit'
-      // ]
+    $form['actions']['sava_redirect_rdv'] = $form['actions']['submit'];
+    $form['actions']['sava_redirect_rdv']['#submit'][] = [
+      '::_booking_manager_submitRedirectRdvForm'
     ];
-    $form['#tree'] = true;
-    $form['booking_manager'] += $plugin_manager->createInstance($ThirdPartySettings['plugin'])->buildConfigForm($entity, $form_state);
-    $form['booking_manager']['textd'] = [
-      '#type' => 'textfield',
-      '#title' => 'hju',
-      '#tree' => TRUE
-    ];
-    dump($form['booking_manager']);
-    $form['actions']['submit']['#submit'][] = '_booking_manager_form_submit';
-
-    // $form['#entity_builders'][] = '_booking_manager_form_submit_builder';
-    // $form['#validate'][] = '_booking_manager_form_submit';
+    $form['actions']['sava_redirect_rdv']['#value'] = 'Enregistrer et gerer le RDV';
   }
 }
 
-function _booking_manager_form_submit(&$form, FormStateInterface $form_state) {
+function _booking_manager_submitRedirectRdvForm(&$form, FormStateInterface $form_state) {
   $values = $form_state->getValues();
   // dump($values);
   debugLog::kintDebugDrupal($values, '_booking_manager_form_submit', true);
@@ -154,40 +239,27 @@ function _booking_manager_form_submit_builder($entity_type, $entity, &$form, For
 }
 
 /**
- * Entity form builder for the node type form to map some values to third party
- * settings
- */
-function booking_manager_form_node_type_form_builder($entity_type, NodeTypeInterface $type, &$form, FormStateInterface $form_state) {
-  if ($form_state->getValue('booking_manager_enabled') === 1) {
-    $type->setThirdPartySetting('booking_manager', 'enabled', 1);
-    $type->setThirdPartySetting('booking_manager', 'plugin', $form_state->getValue('booking_manager_plugin'));
-    return;
-  }
-  //
-  $type->unsetThirdPartySetting('booking_manager', 'enabled');
-  $type->unsetThirdPartySetting('booking_manager', 'plugin');
-}
-
-/**
  * Implements hook_entity_extra_field_info().
  */
 function booking_manager_entity_extra_field_info() {
   $extra = array();
-
   $bundles = NodeType::loadMultiple();
   $bundles = array_filter($bundles, function ($bundle) {
     return $bundle->getThirdPartySetting('booking_manager', 'enabled') === 1;
   });
 
+  /**
+   * --
+   */
   foreach ($bundles as $bundle) {
-    $extra['node'][$bundle->Id()]['display']['booking_manager'] = array(
+    $extra['node'][$bundle->Id()]['display']['booking_manager'] = [
       'label' => t('Prise de RDV'),
       'description' => t('Prise de RDV'),
       'weight' => 100,
       'visible' => TRUE
-    );
+    ];
   }
-
+  //
   return $extra;
 }
 
