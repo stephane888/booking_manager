@@ -75,17 +75,21 @@ class ManageDaysEntityType extends ConfigEntityBundleBase implements ManageDaysE
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);
     $jours = $this->get('jours');
-    foreach ($jours as $k => $val) {
-      $d = explode(":", $val['h_d__m_d']);
-      $jours[$k]['h_d'] = $d[0];
-      $jours[$k]['m_d'] = isset($d[1]) ? $d[1] : 0;
-      unset($jours[$k]['h_d__m_d']);
-      //
-      $f = explode(":", $val['h_f__m_f']);
-      $jours[$k]['h_f'] = $f[0];
-      $jours[$k]['m_f'] = isset($f[1]) ? $f[1] : 0;
-      unset($jours[$k]['h_f__m_f']);
-    }
+    if (!empty($jours))
+      foreach ($jours as $k => $val) {
+        if (!empty($val['h_d__m_d'])) {
+          $d = explode(":", $val['h_d__m_d']);
+          $jours[$k]['h_d'] = $d[0];
+          $jours[$k]['m_d'] = isset($d[1]) ? $d[1] : 0;
+          unset($jours[$k]['h_d__m_d']);
+        }
+        if (!empty($val['h_f__m_f'])) {
+          $f = explode(":", $val['h_f__m_f']);
+          $jours[$k]['h_f'] = $f[0];
+          $jours[$k]['m_f'] = isset($f[1]) ? $f[1] : 0;
+          unset($jours[$k]['h_f__m_f']);
+        }
+      }
     $this->set('jours', $jours);
   }
 

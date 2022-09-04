@@ -77,25 +77,29 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
 
   public function getDatasRdv(ContentEntityBase $entity) {
     if (!$entity->isNew()) {
-      $key = $this->getTypeId($entity);
-      $storage = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
-      $entityType = $storage->load($key);
-      $confs = $entityType->toArray();
+      $confs = $this->getBaseConfig($entity);
       $nberDays = $confs['number_week'] * 7;
       $dataToday = new \DateTime('Now');
       $result['jours'] = [];
       for ($i = 0; $i < $nberDays; $i++) {
         $result['jours'][] = [
-          'label' => $dataToday->format("D. \n  j M"),
+          'label' => $dataToday->format("D.") . '<br>' . $dataToday->format("j M"),
+          'value' => $dataToday->format("D j M Y"),
           'creneau' => $this->buildCreneauOfDay($dataToday, $confs)
         ];
         $dataToday->modify('+1 day');
       }
-
       $result['entityType'] = $confs;
       return $result;
     }
     throw new \Exception("Le contenu n'est pas definit");
+  }
+
+  public function getBaseConfig(ContentEntityBase $entity) {
+    $key = $this->getTypeId($entity);
+    $entityType = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id'])->load($key);
+    if (!empty($entityType))
+      return $entityType->toArray();
   }
 
   protected function buildCreneauOfDay(\DateTime $day, array $entityArray) {
@@ -114,7 +118,8 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
         $i++;
         $creneaux[] = [
           'conf' => $dayConf,
-          'value' => $d->format('H:i')
+          'value' => $d->format('H:i'),
+          'status' => ($day > $f) ? false : true
         ];
         $d->modify("+ " . $interval . " minutes");
       }
@@ -217,22 +222,19 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
   /**
    * --
    */
-  protected function getTypeManageDays(ContentEntityBase $entity) {
-    $key = $entity->getEntityTypeId() . '.' . $entity->bundle();
-    // $key_id = preg_replace('/[^a-z0-9\-]/', "_", $key);
-    $key_id = $key;
+  protected function createTypeManageDays(ContentEntityBase $entity, $key) {
     $entG = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
-    $val = $entG->load($key_id);
+    $val = $entG->load($key);
     if (empty($val)) {
       $values = [
-        'id' => $key_id,
-        'label' => $key
+        'id' => $key,
+        'label' => $entity
       ];
       $entityType = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id'])->create($values);
       $entityType->save();
-      return $key_id;
+      return $key;
     }
-    return $key_id;
+    return $key;
   }
 
   /**

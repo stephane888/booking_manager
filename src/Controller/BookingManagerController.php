@@ -56,9 +56,10 @@ class BookingManagerController extends ControllerBase {
           return $this->reponse($manage_days->getDatasRdv($content));
         }
       }
+      throw new \Exception('Le type ne suppoerte pas la prise de RDV.');
     }
     catch (\Exception $e) {
-      $this->reponse(Utility::errorAll($e), '400', $e->getMessage());
+      return $this->reponse(Utility::errorAll($e), '400', $e->getMessage());
     }
   }
 

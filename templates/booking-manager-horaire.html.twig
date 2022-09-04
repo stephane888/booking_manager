@@ -1,0 +1,31 @@
+<div class="ouverture">
+	{{ content.conf.label }}
+</div>
+<div class="fermeture">
+	jusqu'à
+	{{ content.entity.today }}
+</div>
+<div class="horaire-bloc">
+	<div class="horaire__list--trigger">
+		{{ 'Consulter tous les horaires'|trans }}
+	</div>
+	<ul class="horaire__list">
+		{% for jour in content.entity.jours %}
+		<li class="clearfix">
+			{% if jour.status %}
+    			<span class="day">{{ jour.label }}</span> 
+    			<span class="dotted"></span> 
+    			<span class="horaire"> 
+    				<span data-yext-field="hours-monday">{{ jour.h_d }}:{{ jour.m_d }} - {{ jour.h_f }}:{{ jour.m_f }} </span>
+    			</span> 
+    		{% else %}
+    			<span class="day">{{ jour.label }}</span> 
+    			<span class="dotted"></span> 
+    			<span class="horaire"> 
+    				<span data-yext-field="hours-sunday">{{ 'close'|trans }}</span>
+    			</span>
+			{% endif %}
+		</li>
+		{% endfor %}
+	</ul>
+</div>

@@ -26,6 +26,7 @@ function booking_manager_theme() {
     'file' => 'manage_days_entity.page.inc',
     'template' => 'manage_days_entity'
   ];
+  //
   $theme['manage_days_entity_content_add_list'] = [
     'render element' => 'content',
     'variables' => [
@@ -33,6 +34,15 @@ function booking_manager_theme() {
     ],
     'file' => 'manage_days_entity.page.inc'
   ];
+  //
+  $theme['booking_manager_horaire'] = [
+    'render element' => 'content',
+    'variables' => [
+      'content' => NULL
+    ],
+    'file' => 'booking_manager.inc'
+  ];
+  //
   return $theme;
 }
 
@@ -98,59 +108,60 @@ function booking_manager_form_node_type_form_alter(&$form, FormStateInterface $f
   /**
    * --
    */
-  $form['prise_rdv']['manage_dates'] = [
-    '#type' => 'fieldset',
-    '#title' => 'Configuration des dates',
-    '#tree' => TRUE,
-    '#states' => [
-      'visible' => [
-        ':input[name="booking_manager_enabled"]' => [
-          'checked' => TRUE
-        ]
-      ]
-    ]
-  ];
+  // $form['prise_rdv']['manage_dates'] = [
+  // '#type' => 'fieldset',
+  // '#title' => 'Configuration des dates',
+  // '#tree' => TRUE,
+  // '#states' => [
+  // 'visible' => [
+  // ':input[name="booking_manager_enabled"]' => [
+  // 'checked' => TRUE
+  // ]
+  // ]
+  // ]
+  // ];
 
-  $id = 'node_' . $node_type->get('type');
-  $type = \Drupal::entityTypeManager()->getStorage('manage_days_entity_type')->load($id);
-  $jours = Drupal\booking_manager\ManageDaysInterface::jours;
-  if (!empty($type)) {
-    $jours = $type->get('jours');
-  }
-  /**
-   * --
-   */
-  foreach ($jours as $i => $val) {
-    //
-    $form['prise_rdv']['manage_dates'][$i] = [
-      "#type" => 'details',
-      '#title' => $val['label'],
-      '#open' => false
-    ];
-    $form['prise_rdv']['manage_dates'][$i]['label'] = [
-      "#type" => 'textfield',
-      '#title' => 'Label',
-      '#default_value' => $val['label']
-    ];
-    //
-    $form['prise_rdv']['manage_dates'][$i]['status'] = [
-      "#type" => 'checkbox',
-      '#title' => 'Status',
-      '#default_value' => $val['status']
-    ];
-    //
-    $form['prise_rdv']['manage_dates'][$i]['h_d__m_d'] = [
-      "#type" => 'textfield',
-      '#title' => 'Heure debut',
-      '#default_value' => $val['h_d'] . ':' . $val['m_d']
-    ];
-    //
-    $form['prise_rdv']['manage_dates'][$i]['h_f__m_f'] = [
-      "#type" => 'textfield',
-      '#title' => 'Heure fin',
-      '#default_value' => $val['h_f'] . ':' . $val['m_f']
-    ];
-  }
+  // $id = 'node_' . $node_type->get('type');
+  // $type =
+  // \Drupal::entityTypeManager()->getStorage('manage_days_entity_type')->load($id);
+  // $jours = Drupal\booking_manager\ManageDaysInterface::jours;
+  // if (!empty($type)) {
+  // $jours = $type->get('jours');
+  // }
+  // /**
+  // * --
+  // */
+  // foreach ($jours as $i => $val) {
+  // //
+  // $form['prise_rdv']['manage_dates'][$i] = [
+  // "#type" => 'details',
+  // '#title' => $val['label'],
+  // '#open' => false
+  // ];
+  // $form['prise_rdv']['manage_dates'][$i]['label'] = [
+  // "#type" => 'textfield',
+  // '#title' => 'Label',
+  // '#default_value' => $val['label']
+  // ];
+  // //
+  // $form['prise_rdv']['manage_dates'][$i]['status'] = [
+  // "#type" => 'checkbox',
+  // '#title' => 'Status',
+  // '#default_value' => $val['status']
+  // ];
+  // //
+  // $form['prise_rdv']['manage_dates'][$i]['h_d__m_d'] = [
+  // "#type" => 'textfield',
+  // '#title' => 'Heure debut',
+  // '#default_value' => $val['h_d'] . ':' . $val['m_d']
+  // ];
+  // //
+  // $form['prise_rdv']['manage_dates'][$i]['h_f__m_f'] = [
+  // "#type" => 'textfield',
+  // '#title' => 'Heure fin',
+  // '#default_value' => $val['h_f'] . ':' . $val['m_f']
+  // ];
+  // }
   //
   $form['#entity_builders'][] = 'booking_manager_form_node_type_form_builder';
   //
@@ -164,31 +175,22 @@ function booking_manager_form_node_type_form_builder($entity_type, NodeTypeInter
   if ($form_state->getValue('booking_manager_enabled') === 1) {
     $type->setThirdPartySetting('booking_manager', 'enabled', 1);
     $type->setThirdPartySetting('booking_manager', 'plugin', $form_state->getValue('booking_manager_plugin'));
-    $values['jours'] = $form_state->getValue('manage_dates');
-    foreach ($values['jours'] as $k => $val) {
-      $d = explode(":", $val['h_d__m_d']);
-      $values['jours'][$k]['h_d'] = $d[0];
-      $values['jours'][$k]['m_d'] = isset($d[1]) ? $d[1] : 0;
-      unset($values['jours'][$k]['h_d__m_d']);
-      //
-      $f = explode(":", $val['h_f__m_f']);
-      $values['jours'][$k]['h_f'] = $f[0];
-      $values['jours'][$k]['m_f'] = isset($f[1]) ? $f[1] : 0;
-      unset($values['jours'][$k]['h_f__m_f']);
-    }
-    $values['id'] = 'node_' . $form_state->getValue('type');
-    $values['label'] = 'Node ' . $form_state->getValue('name');
-    /**
-     *
-     * @var \Drupal\booking_manager\ManageDaysPluginManger $plugin_manager
-     */
-    $plugin_manager = \Drupal::service('plugin.manager.booking_manager.manage_days');
-    /**
-     *
-     * @var \Drupal\booking_manager\ManageDaysBase $manage_days
-     */
-    $manage_days = $plugin_manager->createInstance($form_state->getValue('booking_manager_plugin'));
-    $manage_days->saveTypeByArray($values);
+    // // $values['jours'] = $form_state->getValue('manage_dates');
+    // $values['id'] = 'node_' . $form_state->getValue('type');
+    // $values['label'] = 'Node ' . $form_state->getValue('name');
+    // /**
+    // *
+    // * @var \Drupal\booking_manager\ManageDaysPluginManger $plugin_manager
+    // */
+    // $plugin_manager =
+    // \Drupal::service('plugin.manager.booking_manager.manage_days');
+    // /**
+    // *
+    // * @var \Drupal\booking_manager\ManageDaysBase $manage_days
+    // */
+    // $manage_days =
+    // $plugin_manager->createInstance($form_state->getValue('booking_manager_plugin'));
+    // $manage_days->saveTypeByArray($values);
     return;
   }
   //
@@ -218,24 +220,21 @@ function booking_manager_form_node_form_alter(&$form, FormStateInterface $form_s
    */
   if (!empty($ThirdPartySettings['enabled']) && !empty($ThirdPartySettings['plugin'])) {
     $form['actions']['sava_redirect_rdv'] = $form['actions']['submit'];
-    $form['actions']['sava_redirect_rdv']['#submit'][] = [
-      '::_booking_manager_submitRedirectRdvForm'
-    ];
+    $form['actions']['sava_redirect_rdv']['#submit'][] = '_booking_manager_submitRedirectRdvForm';
     $form['actions']['sava_redirect_rdv']['#value'] = 'Enregistrer et gerer le RDV';
   }
 }
 
 function _booking_manager_submitRedirectRdvForm(&$form, FormStateInterface $form_state) {
-  $values = $form_state->getValues();
-  // dump($values);
-  debugLog::kintDebugDrupal($values, '_booking_manager_form_submit', true);
-  // $form_state = new FormState();
-  // $form_state->setValues($values);
-}
-
-function _booking_manager_form_submit_builder($entity_type, $entity, &$form, FormStateInterface $form_state) {
-  $values = $form_state->getValues();
-  \Stephane888\Debug\debugLog::kintDebugDrupal($values, '_booking_manager_form_submit_builder', true);
+  /**
+   *
+   * @var \Drupal\node\NodeForm $nodeForm
+   */
+  $nodeForm = $form_state->getFormObject();
+  $form_state->setRedirect("booking_manager.manager", [
+    'entity_type_id' => 'node',
+    'id' => $nodeForm->getEntity()->id()
+  ]);
 }
 
 /**
