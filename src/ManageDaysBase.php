@@ -79,15 +79,19 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
     if (!$entity->isNew()) {
       $confs = $this->getBaseConfig($entity);
       $nberDays = $confs['number_week'] * 7;
-      $dataToday = new \DateTime('Now');
+      $runDateDay = new \DateTime('Now');
+      $dateToday = new \DateTime('Now');
       $result['jours'] = [];
       for ($i = 0; $i < $nberDays; $i++) {
+        $dayConf = $confs['jours'][$runDateDay->format('w')];
         $result['jours'][] = [
-          'label' => $dataToday->format("D.") . '<br>' . $dataToday->format("j M"),
-          'value' => $dataToday->format("D j M Y"),
-          'creneau' => $this->buildCreneauOfDay($dataToday, $confs)
+          'label' => $runDateDay->format("D.") . '<br>' . $runDateDay->format("j M"),
+          'value' => $runDateDay->format("D j M Y"),
+          'date' => $runDateDay->format("Y-m-d H:i:s"),
+          'conf' => $dayConf,
+          'creneau' => $dayConf['status'] ? $this->buildCreneauOfDay($runDateDay, $dateToday, $confs, $dayConf) : []
         ];
-        $dataToday->modify('+1 day');
+        $runDateDay->modify('+1 day');
       }
       $result['entityType'] = $confs;
       return $result;
@@ -102,10 +106,9 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
       return $entityType->toArray();
   }
 
-  protected function buildCreneauOfDay(\DateTime $day, array $entityArray) {
+  protected function buildCreneauOfDay(\DateTime $day, $dateToday, array $entityArray, array $dayConf) {
     $creneaux = [];
     $day_string = $day->format("Y-m-d H:i:s");
-    $dayConf = $entityArray['jours'][$day->format('w')];
     $d = new \DateTime($day_string);
     $f = new \DateTime($day_string);
     $d->setTime($dayConf['h_d'], $dayConf['m_d']);
@@ -117,9 +120,8 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
       while ($f > $d && $i < $this->maxCreneau) {
         $i++;
         $creneaux[] = [
-          'conf' => $dayConf,
           'value' => $d->format('H:i'),
-          'status' => ($day > $f) ? false : true
+          'status' => ($dateToday > $d) ? false : true
         ];
         $d->modify("+ " . $interval . " minutes");
       }

@@ -24,3 +24,21 @@ booking_manager.get.datas.rdv:
     _controller: '\Drupal\booking_manager\Controller\BookingManagerController::datasRdv'
   requirements:
     _permission: 'access content'
+    
+booking_manager.rdv.souscription:
+  path: '/booking-manager/souscription/{entity_type_id}/{entity_id}'
+  defaults:
+    _title: 'Reservation'
+    _controller: '\Drupal\booking_manager\Controller\BookingManagerController::souscriptionRdv'
+  requirements:
+    _permission: 'access content'
+#   _user_is_logged_in: 'TRUE' 
+    
+booking_manager.save.rdv:
+  path: '/booking-manager/save/rdv/{entity_type_id}/{entity_id}'
+  defaults:
+    _title: 'Reservation'
+    _controller: '\Drupal\booking_manager\Controller\BookingManagerController::SaveSouscriptionRdv'
+  requirements:
+    _permission: 'access content'
+#   _user_is_logged_in: 'TRUE' 

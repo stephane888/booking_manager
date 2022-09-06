@@ -6,11 +6,52 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Component\Serialization\Json;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Stephane888\Debug\Utility;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Returns responses for Booking Manager routes.
  */
 class BookingManagerController extends ControllerBase {
+
+  /**
+   *
+   * @return string[]|\Drupal\Core\StringTranslation\TranslatableMarkup[]
+   */
+  public function souscriptionRdv(Request $request, string $entity_type_id, $entity_id) {
+    $build['content'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'section',
+      "#attributes" => [
+        'id' => 'app-prise-rdv',
+        'class' => [
+          'm-5',
+          'p-5'
+        ]
+      ]
+    ];
+    $build['content']['#attached']['library'][] = 'booking_manager/prise_rdv';
+    // $build['content']['#attached']['drupalSettings']['vuejs_entity']['language']
+    // = \Drupal::languageManager()->getCurrentLanguage();
+    // $request->query->add([
+    // 'node' => $entity_type_id
+    // ]);
+
+    return $build;
+  }
+
+  /**
+   *
+   * @return string[]|\Drupal\Core\StringTranslation\TranslatableMarkup[]
+   */
+  public function SaveSouscriptionRdv(Request $request, string $entity_type_id, $entity_id) {
+    try {
+      $datas = Json::decode($request->getContent());
+      return $this->reponse($datas);
+    }
+    catch (\Exception $e) {
+      return $this->reponse(Utility::errorAll($e), 400, $e->getMessage());
+    }
+  }
 
   /**
    * Builds the response.
@@ -53,7 +94,10 @@ class BookingManagerController extends ControllerBase {
            * @var \Drupal\booking_manager\ManageDaysBase $manage_days
            */
           $manage_days = \Drupal::service('plugin.manager.booking_manager.manage_days')->createInstance($ThirdPartySettings['plugin']);
-          return $this->reponse($manage_days->getDatasRdv($content));
+          return $this->reponse([
+            'data_creneaux' => $manage_days->getDatasRdv($content),
+            'data_to_rdv' => $this->getDataToRdv($entity_type_id, $entity_id)
+          ]);
         }
       }
       throw new \Exception('Le type ne suppoerte pas la prise de RDV.');
@@ -61,6 +105,14 @@ class BookingManagerController extends ControllerBase {
     catch (\Exception $e) {
       return $this->reponse(Utility::errorAll($e), '400', $e->getMessage());
     }
+  }
+
+  protected function getDataToRdv(string $entity_type_id, $entity_id) {
+    $datas = $this->entityTypeManager()->getStorage($entity_type_id)->load($entity_id);
+    if ($datas) {
+      return $datas->toArray();
+    }
+    return [];
   }
 
   /**
