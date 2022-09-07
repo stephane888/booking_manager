@@ -117,6 +117,8 @@ class ManageDaysEntityTypeForm extends EntityForm {
         ]));
     }
     $form_state->setRedirectUrl($manage_days_entity_type->toUrl('collection'));
+    // pour des utilisateurs avec des droits non admin, on doit rediriger sur la
+    // liste via une vue.
   }
 
 }

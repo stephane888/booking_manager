@@ -231,6 +231,8 @@ function _booking_manager_submitRedirectRdvForm(&$form, FormStateInterface $form
    * @var \Drupal\node\NodeForm $nodeForm
    */
   $nodeForm = $form_state->getFormObject();
+  // on empeche drupal de faire une redirection via destination.
+  \Drupal::request()->query->remove('destination');
   $form_state->setRedirect("booking_manager.manager", [
     'entity_type_id' => 'node',
     'id' => $nodeForm->getEntity()->id()
