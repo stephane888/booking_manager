@@ -54,6 +54,7 @@ class BookingManagerController extends ControllerBase {
   }
 
   /**
+   * Permet de configurer un rdv à partir de l'url.
    * Builds the response.
    */
   public function manager($entity_type_id, $id) {
@@ -78,6 +79,7 @@ class BookingManagerController extends ControllerBase {
   }
 
   /**
+   * Retourne les données JSON.
    *
    * @param string $entity_type_id
    * @param int $entity_id

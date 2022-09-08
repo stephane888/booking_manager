@@ -17,6 +17,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityFormBuilder;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\booking_manager\Entity\ManageDaysEntityType;
 
 /**
  * Icecream plugin manager.
@@ -101,9 +102,10 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
 
   public function getBaseConfig(ContentEntityBase $entity) {
     $key = $this->getTypeId($entity);
-    $entityType = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id'])->load($key);
+    $entityType = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id'])->load($key);
     if (!empty($entityType))
       return $entityType->toArray();
+    throw new \Exception("Aucune configuration disponible");
   }
 
   protected function buildCreneauOfDay(\DateTime $day, $dateToday, array $entityArray, array $dayConf) {
@@ -138,19 +140,18 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
   public function buildConfigForm(ContentEntityBase $entity) {
     $form = [];
     if (!$entity->isNew()) {
-      $key = $this->getTypeId($entity);
-      $storage = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
-      $entityType = $storage->load($key);
+      $entityType = $this->getEntityDay($entity);
       if ($entityType) {
         $entityType->set('label', $this->getTypeLabel($entity));
         $form = $this->EntityFormBuilder->getForm($entityType, 'edit');
       }
       else {
+        $key = $this->getTypeId($entity);
         $values = [
           'id' => $key,
           'label' => $this->getTypeLabel($entity)
         ];
-        $entity = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id'])->create($values);
+        $entity = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id'])->create($values);
         $form = $this->EntityFormBuilder->getForm($entity, 'add');
       }
     }
@@ -159,6 +160,44 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
     }
     $form['#attributes']['class'][] = 'container';
     return $form;
+  }
+
+  /**
+   * Permet de recuperer la configuration d'un rdv à partir d'une entitée.
+   *
+   * @param ContentEntityBase $entity
+   * @return ManageDaysEntityType
+   */
+  public function getEntityDay(ContentEntityBase $entity) {
+    $key = $this->getTypeId($entity);
+    $storage = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id']);
+    return $storage->load($key);
+  }
+
+  /**
+   * Permet de cloner et enregistrer la configuration d'une entité ( $entity )
+   * vers une autre
+   * ($entityClone).
+   *
+   * @param ContentEntityBase $entity
+   * @param ContentEntityBase $entityClone
+   * @return ManageDaysEntityType|null
+   */
+  public function CloneFromAnother(ContentEntityBase $entity, ContentEntityBase $entityClone) {
+    $entityType = $this->getEntityDay($entity);
+    //
+    if ($entityType) {
+      $entityTypeClone = $this->getEntityDay($entityClone);
+      if (empty($entityTypeClone)) {
+        $entityType = $entityType->createDuplicate()->toArray();
+        $entityType['id'] = $this->getTypeId($entityClone);
+        $entityType['label'] = $this->getTypeLabel($entityClone);
+        $entityTypeClone = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id'])->create($entityType);
+        $entityTypeClone->save();
+      }
+      return $entityTypeClone;
+    }
+    return;
   }
 
   /**
@@ -180,7 +219,7 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
 
   public function saveTypeByArray(array $values) {
     if (!empty($values['id']) && !empty($values['label'])) {
-      $entG = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
+      $entG = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id']);
       /**
        *
        * @var \Drupal\booking_manager\Entity\ManageDaysEntityType $type
@@ -225,14 +264,14 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
    * --
    */
   protected function createTypeManageDays(ContentEntityBase $entity, $key) {
-    $entG = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
+    $entG = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id']);
     $val = $entG->load($key);
     if (empty($val)) {
       $values = [
         'id' => $key,
         'label' => $entity
       ];
-      $entityType = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id'])->create($values);
+      $entityType = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id'])->create($values);
       $entityType->save();
       return $key;
     }
@@ -245,10 +284,10 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
    * @return array
    */
   public function buildConfigFormNone() {
-    $entG = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id']);
+    $entG = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id']);
     $val = $entG->load('testkksa888');
     if (empty($val)) {
-      $entityType = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_type_id'])->create([
+      $entityType = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id'])->create([
         'id' => 'testkksa888'
       ]);
       $entityType->save();
@@ -258,7 +297,7 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
     $values = [
       'type' => 'testkksa888'
     ];
-    $entity = \Drupal::entityTypeManager()->getStorage($this->pluginDefinition['entity_id'])->create($values);
+    $entity = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_id'])->create($values);
     $form = $this->EntityFormBuilder->getForm($entity, 'default');
     if (!empty($form['actions-'])) {
       // unset($form['actions']);
