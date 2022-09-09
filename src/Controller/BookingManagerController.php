@@ -46,6 +46,33 @@ class BookingManagerController extends ControllerBase {
   public function SaveSouscriptionRdv(Request $request, string $entity_type_id, $entity_id) {
     try {
       $datas = Json::decode($request->getContent());
+      $content = $this->entityTypeManager()->getStorage($entity_type_id)->load($entity_id);
+      if ($content) {
+        $BundleEntityType = $content->getEntityType()->getBundleEntityType();
+        $ThirdPartySettings = $this->entityTypeManager()->getStorage($BundleEntityType)->load($content->bundle())->getThirdPartySettings('booking_manager');
+        if (!empty($ThirdPartySettings['enabled']) && !empty($ThirdPartySettings['plugin'])) {
+          $day = new \DateTime($datas['date']);
+          // $d->setDate($year, $month, $day);
+          /**
+           *
+           * @var \Drupal\booking_manager\ManageDaysBase $manage_days
+           */
+          $manage_days = \Drupal::service('plugin.manager.booking_manager.manage_days')->createInstance($ThirdPartySettings['plugin']);
+          $BaseConfig = $manage_days->getBaseConfig($content);
+          $time = explode(":", $datas['creneaux']);
+          if (!empty($time[0])) {
+            $values = [
+              'name' => $content->label(),
+              'creneau' => [
+                'value' => $day->setTime($time[0], $time[1])->format("Y-m-d\TH-i-s"),
+                'end_value' => $day->modify("+ " . $BaseConfig["interval"] . " minutes")->format("Y-m-d\TH-i-s")
+              ]
+            ];
+            $datas['values'] = $values;
+            $datas['save'] = $manage_days->SaveRdv($content, $values);
+          }
+        }
+      }
       return $this->reponse($datas);
     }
     catch (\Exception $e) {

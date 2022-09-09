@@ -78,10 +78,10 @@ use Drupal\user\UserInterface;
  * )
  */
 class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysEntityInterface {
-  
+
   use EntityChangedTrait;
   use EntityPublishedTrait;
-  
+
   /**
    *
    * {@inheritdoc}
@@ -92,47 +92,47 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
       'user_id' => \Drupal::currentUser()->id()
     ];
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   protected function urlRouteParameters($rel) {
     $uri_route_parameters = parent::urlRouteParameters($rel);
-    
+
     if ($rel === 'revision_revert' && $this instanceof RevisionableInterface) {
       $uri_route_parameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
     }
     elseif ($rel === 'revision_delete' && $this instanceof RevisionableInterface) {
       $uri_route_parameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
     }
-    
+
     return $uri_route_parameters;
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);
-    
+
     foreach (array_keys($this->getTranslationLanguages()) as $langcode) {
       $translation = $this->getTranslation($langcode);
-      
+
       // If no owner has been set explicitly, make the anonymous user the owner.
       if (!$translation->getOwner()) {
         $translation->setOwnerId(0);
       }
     }
-    
+
     // If no revision author has been set explicitly,
     // make the manage_days_entity owner the revision author.
     if (!$this->getRevisionUser()) {
       $this->setRevisionUserId($this->getOwnerId());
     }
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -140,7 +140,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
   public function getName() {
     return $this->get('name')->value;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -149,7 +149,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
     $this->set('name', $name);
     return $this;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -157,7 +157,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
   public function getCreatedTime() {
     return $this->get('created')->value;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -166,7 +166,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
     $this->set('created', $timestamp);
     return $this;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -174,7 +174,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
   public function getOwner() {
     return $this->get('user_id')->entity;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -182,7 +182,18 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
   public function getOwnerId() {
     return $this->get('user_id')->target_id;
   }
-  
+
+  /**
+   *
+   * @return []
+   */
+  public function getCreneau() {
+    return [
+      'value' => $this->get('creneau')->value,
+      'end_value' => $this->get('creneau')->end_value
+    ];
+  }
+
   /**
    *
    * {@inheritdoc}
@@ -191,7 +202,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
     $this->set('user_id', $uid);
     return $this;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -200,17 +211,17 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
     $this->set('user_id', $account->id());
     return $this;
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
-    
+
     // Add the published field.
     $fields += static::publishedBaseFieldDefinitions($entity_type);
-    
+
     $fields['user_id'] = BaseFieldDefinition::create('entity_reference')->setLabel(t('Authored by'))->setDescription(t('The user ID of author of the Manage days entity entity.'))->setRevisionable(TRUE)->setSetting('target_type', 'user')->setSetting('handler', 'default')->setTranslatable(TRUE)->setDisplayOptions('view', [
       'label' => 'hidden',
       'type' => 'author',
@@ -225,7 +236,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
         'placeholder' => ''
       ]
     ])->setDisplayConfigurable('form', TRUE)->setDisplayConfigurable('view', TRUE);
-    
+
     $fields['name'] = BaseFieldDefinition::create('string')->setLabel(t('Name'))->setDescription(t('The name of the Manage days entity entity.'))->setRevisionable(TRUE)->setSettings([
       'max_length' => 50,
       'text_processing' => 0
@@ -237,19 +248,21 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
       'type' => 'string_textfield',
       'weight' => -4
     ])->setDisplayConfigurable('form', TRUE)->setDisplayConfigurable('view', TRUE)->setRequired(TRUE);
-    
+
+    $fields['creneau'] = BaseFieldDefinition::create('daterange')->setLabel(t('Creneau'))->setRevisionable(TRUE)->setDisplayConfigurable('form', TRUE)->setDisplayConfigurable('view', TRUE)->setRequired(TRUE);
+
     $fields['status']->setDescription(t('A boolean indicating whether the Manage days entity is published.'))->setDisplayOptions('form', [
       'type' => 'boolean_checkbox',
       'weight' => -3
     ]);
-    
+
     $fields['created'] = BaseFieldDefinition::create('created')->setLabel(t('Created'))->setDescription(t('The time that the entity was created.'));
-    
+
     $fields['changed'] = BaseFieldDefinition::create('changed')->setLabel(t('Changed'))->setDescription(t('The time that the entity was last edited.'));
-    
+
     $fields['revision_translation_affected'] = BaseFieldDefinition::create('boolean')->setLabel(t('Revision translation affected'))->setDescription(t('Indicates if the last edit of a translation belongs to current revision.'))->setReadOnly(TRUE)->setRevisionable(TRUE)->setTranslatable(TRUE);
-    
+
     return $fields;
   }
-  
+
 }

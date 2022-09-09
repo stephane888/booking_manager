@@ -65,17 +65,40 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
    *
    * {@inheritdoc}
    */
-  public function buildForm(ConfigEntityBundleBase $entity) {
-    // dump($this->pluginDefinition);
-    return [
-      '#type' => 'html_tag',
-      '#tag' => 'h2',
-      '#value' => 'buildForm'
-    ];
-    // return $this->formBuilder->getForm($this->pluginDefinition['form'],
-    // $entity);
+  // public function buildForm(ConfigEntityBundleBase $entity) {
+  // // dump($this->pluginDefinition);
+  // return [
+  // '#type' => 'html_tag',
+  // '#tag' => 'h2',
+  // '#value' => 'buildForm'
+  // ];
+  // // return $this->formBuilder->getForm($this->pluginDefinition['form'],
+  // // $entity);
+  // }
+
+  /**
+   * --
+   *
+   * @param ContentEntityBase $entity
+   */
+  public function SaveRdv(ContentEntityBase $entity, array $values) {
+    //
+    if (!empty($values)) {
+      $key = $this->getTypeId($entity);
+      $values['type'] = $key;
+      $entity = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_id'])->create($values);
+      $entity->save();
+      return $entity;
+    }
+    return $entity;
   }
 
+  /**
+   *
+   * @param ContentEntityBase $entity
+   * @throws \Exception
+   * @return mixed[][]
+   */
   public function getDatasRdv(ContentEntityBase $entity) {
     if (!$entity->isNew()) {
       $confs = $this->getBaseConfig($entity);

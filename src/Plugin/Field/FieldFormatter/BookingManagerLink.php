@@ -43,6 +43,7 @@ class BookingManagerLink extends FormatterBase {
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
+
     //
     foreach ($items as $delta => $item) {
       /**
