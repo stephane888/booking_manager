@@ -47,7 +47,7 @@ class BookingManagerController extends ControllerBase {
     try {
       $datas = Json::decode($request->getContent());
       $content = $this->entityTypeManager()->getStorage($entity_type_id)->load($entity_id);
-      if ($content) {
+      if ($content && $datas) {
         $BundleEntityType = $content->getEntityType()->getBundleEntityType();
         $ThirdPartySettings = $this->entityTypeManager()->getStorage($BundleEntityType)->load($content->bundle())->getThirdPartySettings('booking_manager');
         if (!empty($ThirdPartySettings['enabled']) && !empty($ThirdPartySettings['plugin'])) {
@@ -66,7 +66,8 @@ class BookingManagerController extends ControllerBase {
               'creneau' => [
                 'value' => $day->setTime($time[0], $time[1])->format("Y-m-d\TH-i-s"),
                 'end_value' => $day->modify("+ " . $BaseConfig["interval"] . " minutes")->format("Y-m-d\TH-i-s")
-              ]
+              ],
+              'creneau_string' => $datas['creneaux']
             ];
             $datas['values'] = $values;
             $datas['save'] = $manage_days->SaveRdv($content, $values);

@@ -105,6 +105,9 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
       $nberDays = $confs['number_week'] * 7;
       $runDateDay = new \DateTime('Now');
       $dateToday = new \DateTime('Now');
+      $lastDay = new \DateTime('Now');
+      $lastDay->modify("+ " . $nberDays . " days");
+      $result['unvalable'] = $this->getUnvalableCreneaux($dateToday, $lastDay, $confs);
       $result['jours'] = [];
       for ($i = 0; $i < $nberDays; $i++) {
         $dayConf = $confs['jours'][$runDateDay->format('w')];
@@ -113,7 +116,7 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
           'value' => $runDateDay->format("D j M Y"),
           'date' => $runDateDay->format("Y-m-d H:i:s"),
           'conf' => $dayConf,
-          'creneau' => $dayConf['status'] ? $this->buildCreneauOfDay($runDateDay, $dateToday, $confs, $dayConf) : []
+          'creneau' => $dayConf['status'] ? $this->buildCreneauOfDay($runDateDay, $dateToday, $confs, $dayConf, $result['unvalable']) : []
         ];
         $runDateDay->modify('+1 day');
       }
@@ -123,17 +126,51 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
     throw new \Exception("Le contenu n'est pas definit");
   }
 
-  public function getBaseConfig(ContentEntityBase $entity) {
-    $key = $this->getTypeId($entity);
-    $entityType = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id'])->load($key);
-    if (!empty($entityType))
-      return $entityType->toArray();
-    throw new \Exception("Aucune configuration disponible");
+  /**
+   * Recupere les creneaux non valide.
+   */
+  protected function getUnvalableCreneaux(\DateTime $dateToday, \DateTime $lastDay, array $confs) {
+    $result = [];
+    $Unvalables = [];
+    // $query =
+    // $this->entityTypeManager->getStorage($this->pluginDefinition['entity_id'])->getQuery();
+    // $query =
+    // \Drupal::entityQueryAggregate($this->pluginDefinition['entity_id']);
+    // $query->groupBy('creneau_string');
+    // $query->aggregate('id', 'COUNT');
+    // $result = $query->execute();
+    $query = "
+      select COUNT(creneau_string) AS cnt, creneau_string, creneau__value, DATE_FORMAT(creneau__value, '%Y-%m-%d') as 'day'  FROM manage_days_entity_field_data
+      GROUP BY day, creneau_string
+   ";
+    if ($confs['limit_reservation']) {
+      $query .= " HAVING cnt >=  " . $confs['limit_reservation'];
+    }
+    $result = \Drupal::database()->query($query)->fetchAll(\PDO::FETCH_ASSOC);
+    if ($result) {
+      foreach ($result as $value) {
+        $Unvalables[$value['day']][$value['creneau_string']] = $value['creneau_string'];
+      }
+    }
+    return $Unvalables;
   }
 
-  protected function buildCreneauOfDay(\DateTime $day, $dateToday, array $entityArray, array $dayConf) {
+  /**
+   *
+   * @param \DateTime $day
+   * @param \DateTime $dateToday
+   * @param array $entityArray
+   * @param array $dayConf
+   * @return boolean[][]|NULL[][]
+   */
+  protected function buildCreneauOfDay(\DateTime $day, $dateToday, array $entityArray, array $dayConf, $Unvalables) {
     $creneaux = [];
     $day_string = $day->format("Y-m-d H:i:s");
+    $day_string_small = $day->format("Y-m-d");
+    $UnvalablesCreneaux = [];
+    if (!empty($Unvalables[$day_string_small])) {
+      $UnvalablesCreneaux = $Unvalables[$day_string_small];
+    }
     $d = new \DateTime($day_string);
     $f = new \DateTime($day_string);
     $d->setTime($dayConf['h_d'], $dayConf['m_d']);
@@ -144,14 +181,29 @@ abstract class ManageDaysBase extends PluginBase implements ManageDaysInterface,
       $i = 0;
       while ($f > $d && $i < $this->maxCreneau) {
         $i++;
+        $cr = $d->format('H:i');
+        $status = true;
+        if (!empty($UnvalablesCreneaux[$cr])) {
+          $status = false;
+        }
         $creneaux[] = [
-          'value' => $d->format('H:i'),
-          'status' => ($dateToday > $d) ? false : true
+          'value' => $cr,
+          'status' => ($dateToday < $d && $status) ? true : false,
+          'Unvalable' => $UnvalablesCreneaux,
+          'test-sta' => $status
         ];
         $d->modify("+ " . $interval . " minutes");
       }
     }
     return $creneaux;
+  }
+
+  public function getBaseConfig(ContentEntityBase $entity) {
+    $key = $this->getTypeId($entity);
+    $entityType = $this->entityTypeManager->getStorage($this->pluginDefinition['entity_type_id'])->load($key);
+    if (!empty($entityType))
+      return $entityType->toArray();
+    throw new \Exception("Aucune configuration disponible");
   }
 
   /**

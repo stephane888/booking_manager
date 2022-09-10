@@ -92,7 +92,11 @@ class ManageDaysEntityTypeForm extends EntityForm {
       '#title' => "Decallage entre deux creneau",
       '#default_value' => $manage_days_entity_type->get('decallage')
     ];
-
+    $form['limit_reservation'] = [
+      '#type' => 'number',
+      '#title' => "Nombre de reservation par creneaux ",
+      '#default_value' => $manage_days_entity_type->get('limit_reservation')
+    ];
     return $form;
   }
 

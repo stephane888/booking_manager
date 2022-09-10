@@ -39,7 +39,8 @@ use Drupal\Core\Entity\EntityStorageInterface;
  *     "disabled_periode",
  *     "interval",
  *     "decallage",
- *     "number_week"
+ *     "number_week",
+ *     "limit_reservation"
  *   },
  *   links = {
  *     "canonical" = "/admin/structure/manage_days_entity_type/{manage_days_entity_type}",
@@ -71,6 +72,7 @@ class ManageDaysEntityType extends ConfigEntityBundleBase implements ManageDaysE
   protected $interval = 60;
   protected $decallage = 0;
   protected $number_week = 6;
+  protected $limit_reservation = 1;
 
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);

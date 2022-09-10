@@ -250,6 +250,7 @@ class ManageDaysEntity extends EditorialContentEntityBase implements ManageDaysE
     ])->setDisplayConfigurable('form', TRUE)->setDisplayConfigurable('view', TRUE)->setRequired(TRUE);
 
     $fields['creneau'] = BaseFieldDefinition::create('daterange')->setLabel(t('Creneau'))->setRevisionable(TRUE)->setDisplayConfigurable('form', TRUE)->setDisplayConfigurable('view', TRUE)->setRequired(TRUE);
+    $fields['creneau_string'] = BaseFieldDefinition::create('string')->setLabel(t('Creneau ( brute )'))->setDescription(t(' Creneaux en affichage brute. '));
 
     $fields['status']->setDescription(t('A boolean indicating whether the Manage days entity is published.'))->setDisplayOptions('form', [
       'type' => 'boolean_checkbox',

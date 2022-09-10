@@ -20,6 +20,7 @@ class ManageDaysEntityListBuilder extends EntityListBuilder {
   public function buildHeader() {
     $header['id'] = $this->t('Manage days entity ID');
     $header['name'] = $this->t('Name');
+    $header['creneau_string'] = $this->t('Creneau brute');
     $header['creneau'] = $this->t('Creneau');
     return $header + parent::buildHeader();
   }
@@ -34,6 +35,7 @@ class ManageDaysEntityListBuilder extends EntityListBuilder {
     $row['name'] = Link::createFromRoute($entity->label(), 'entity.manage_days_entity.edit_form', [
       'manage_days_entity' => $entity->id()
     ]);
+    $row['creneau_string'] = $entity->get('creneau_string')->value;
     $date = $entity->getCreneau();
     $row['creneau'] = $date['value'] . ' || ' . $date['end_value'];
     return $row + parent::buildRow($entity);
