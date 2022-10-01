@@ -16,7 +16,7 @@ use Drupal\booking_manager\Annotation\ManageDays;
  * Icecream plugin manager.
  */
 class ManageDaysPluginManger extends DefaultPluginManager {
-  
+
   /**
    * Constructs an ManageDaysPluginManger object.
    *
@@ -35,5 +35,5 @@ class ManageDaysPluginManger extends DefaultPluginManager {
     $this->alterInfo('manage_days_info');
     $this->setCacheBackend($cache_backend, 'booking_manager_manage_days');
   }
-  
+
 }

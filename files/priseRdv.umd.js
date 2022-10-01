@@ -104742,8 +104742,8 @@ function EffectCards(_ref) {
 
 
 
-;// CONCATENATED MODULE: ./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib/index.js??clonedRuleSet-82.use[1]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/components/DateHourColumn.vue?vue&type=template&id=383e024e&
-var DateHourColumnvue_type_template_id_383e024e_render = function render() {
+;// CONCATENATED MODULE: ./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib/index.js??clonedRuleSet-82.use[1]!./node_modules/@vue/vue-loader-v15/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/components/DateHourColumn.vue?vue&type=template&id=09c65833&
+var DateHourColumnvue_type_template_id_09c65833_render = function render() {
   var _vm = this,
       _c = _vm._self._c;
 
@@ -104765,7 +104765,7 @@ var DateHourColumnvue_type_template_id_383e024e_render = function render() {
   }), 0);
 };
 
-var DateHourColumnvue_type_template_id_383e024e_staticRenderFns = [];
+var DateHourColumnvue_type_template_id_09c65833_staticRenderFns = [];
 
 ;// CONCATENATED MODULE: ./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib/index.js??clonedRuleSet-82.use[1]!./node_modules/@vue/vue-loader-v15/lib/index.js??vue-loader-options!./src/components/DateHourColumn.vue?vue&type=script&lang=js&
 
@@ -104815,14 +104815,15 @@ var DateHourColumnvue_type_template_id_383e024e_staticRenderFns = [];
       let weekDays = day.format("dddd");
       let month = day.format("MMMM");
       let dayNumber = day.format("D");
-      let year = day.format("YYYY"); //console.log("value", creneauTime.value, month, weekDays);
+      let year = day.format("YYYY"); //let nextCreneau = this.$store.state.rdv_datas.duree;
 
       let datas = {
         text: `${weekDays} ${dayNumber} ${month} ${year} à ${creneauTime.value}`,
         value: creneauTime.value,
         editing: false,
         date: this.creneaux.value
-      };
+      }; //console.log("value", datas, "---", nextCreneau);
+
       this.$store.dispatch("setSelectedCreneau", datas);
       window.scrollTo(0, 400);
     }
@@ -104841,8 +104842,8 @@ var DateHourColumnvue_type_template_id_383e024e_staticRenderFns = [];
 ;
 var DateHourColumn_component = (0,componentNormalizer/* default */.Z)(
   components_DateHourColumnvue_type_script_lang_js_,
-  DateHourColumnvue_type_template_id_383e024e_render,
-  DateHourColumnvue_type_template_id_383e024e_staticRenderFns,
+  DateHourColumnvue_type_template_id_09c65833_render,
+  DateHourColumnvue_type_template_id_09c65833_staticRenderFns,
   false,
   null,
   null,
@@ -105808,6 +105809,8 @@ external_commonjs_vue_commonjs2_vue_root_Vue_default().use(vuex_esm);
 const state = {
   /* représente les données d'un créneaux spécifique en BD */
   creneaux_datas: [],
+
+  /* information de la prestation sélectionner */
   rdv_datas: {
     title: "",
     prix: "",
@@ -105905,7 +105908,9 @@ const state = {
       let url = context.state.urlCreneaux;
       context.commit("SET_LOADING", true); //console.log("url", context.getters.urlPath);
 
-      let datas = await rootConfig.get(url + context.getters.urlPath).catch(er => {
+      let datas = await rootConfig.get(url + context.getters.urlPath, {
+        timeout: 10000
+      }).catch(er => {
         console.log("cattt", er);
         context.commit("SET_STATUS_CRENEAUX", true);
         context.commit("SET_LOADING", false);
@@ -105961,7 +105966,7 @@ const state = {
       };
       context.commit("SET_SAVING_LOADING", true);
       console.log("datasave", data, url);
-      rootConfig.post(context.state.saveUrl + url, data).then(res => {
+      rootConfig.post(context.state.saveUrl + url + "1", data).then(res => {
         console.log("reponse save", res);
         context.commit("SET_POP_UP_INFO", {
           show: true,
