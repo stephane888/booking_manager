@@ -5,14 +5,14 @@ namespace Drupal\booking_manager\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Component\Serialization\Json;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Stephane888\Debug\Utility;
+use Stephane888\Debug\ExceptionExtractMessage;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Returns responses for Booking Manager routes.
  */
 class BookingManagerController extends ControllerBase {
-
+  
   /**
    *
    * @return string[]|\Drupal\Core\StringTranslation\TranslatableMarkup[]
@@ -35,10 +35,10 @@ class BookingManagerController extends ControllerBase {
     // $request->query->add([
     // 'node' => $entity_type_id
     // ]);
-
+    
     return $build;
   }
-
+  
   /**
    *
    * @return string[]|\Drupal\Core\StringTranslation\TranslatableMarkup[]
@@ -77,10 +77,10 @@ class BookingManagerController extends ControllerBase {
       return $this->reponse($datas);
     }
     catch (\Exception $e) {
-      return $this->reponse(Utility::errorAll($e), 400, $e->getMessage());
+      return $this->reponse(ExceptionExtractMessage::errorAll($e), 400, $e->getMessage());
     }
   }
-
+  
   /**
    * Permet de configurer un rdv à partir de l'url.
    * Builds the response.
@@ -105,7 +105,7 @@ class BookingManagerController extends ControllerBase {
     ];
     return $build;
   }
-
+  
   /**
    * Retourne les données JSON.
    *
@@ -133,10 +133,10 @@ class BookingManagerController extends ControllerBase {
       throw new \Exception('Le type ne suppoerte pas la prise de RDV.');
     }
     catch (\Exception $e) {
-      return $this->reponse(Utility::errorAll($e), '400', $e->getMessage());
+      return $this->reponse(ExceptionExtractMessage::errorAll($e), '400', $e->getMessage());
     }
   }
-
+  
   protected function getDataToRdv(string $entity_type_id, $entity_id) {
     $datas = $this->entityTypeManager()->getStorage($entity_type_id)->load($entity_id);
     if ($datas) {
@@ -144,7 +144,7 @@ class BookingManagerController extends ControllerBase {
     }
     return [];
   }
-
+  
   /**
    *
    * @param Array|string $configs
@@ -161,5 +161,5 @@ class BookingManagerController extends ControllerBase {
     $reponse->setContent($configs);
     return $reponse;
   }
-
+  
 }
